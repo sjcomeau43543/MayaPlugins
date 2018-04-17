@@ -21,8 +21,10 @@ def getMayaWindow():
 
 class BasicDialog(QtWidgets.QDialog):
     def __init__(self, parent=getMayaWindow()):
-        
-        cmds.GetIKHandles()
+        print "first"
+        #cmds.GetIKHandles()
+        print "second"
+        print ikhandles
         
         super(BasicDialog, self).__init__(parent)
         self.setWindowTitle('Maya PyQt Basic Dialog Demo')
@@ -77,71 +79,22 @@ class GetIKHandles(OpenMayaMPx.MPxCommand):
 		
 	def doIt(self,*args):
 	    ikhandles = []
-	    
-	    print "Called"
-	    print "hi"
-	    print "Getting IK Handles"
-	    # 1. Find active selection in the scene
-	    mSel = OpenMaya.MSelectionList()
-	    OpenMaya.MGlobal.getActiveSelectionList(mSel)
-	    mItSelectionList = OpenMaya.MItSelectionList(mSel,OpenMaya.MFn.kDagNode)
-	    
-	    mFnDependencyNode = OpenMaya.MFnDependencyNode()
-	    
-	    # 2. Find IK-Effector        
-	    while(not mItSelectionList.isDone()):
-	        mObj = OpenMaya.MObject()
-	        mItSelectionList.getDependNode(mObj)          
-	        mFnDependencyNode.setObject(mObj)
-	        mPlugArray_joint = OpenMaya.MPlugArray()
-	        mFnDependencyNode.getConnections(mPlugArray_joint)
-	        # Check If effector is connected to selected object
-	        for i in xrange(mPlugArray_joint.length()):
-	            mPlug_joint = mPlugArray_joint[i]
-	            mPlugArray2 = OpenMaya.MPlugArray()
-	            mPlug_joint.connectedTo(mPlugArray2,True,True)
-	            mPlug2 = mPlugArray2[0]
-	            if mPlug2.node().apiTypeStr() == "kIkEffector":
-	                self.activeEffector = mPlug2.node()
-	                mode = "ik"
-	                break
-	
-	            mItSelectionList.next()
-	        
-	        # 3. Find IK-Handle         
-	        #print self.activeEffector.apiTypeStr()      
-	        ''' If IK-Effector is found then :
-	            - find IK-Handle
-	        '''  
-	        if self.activeEffector.apiTypeStr() == "kIkEffector":
-	            mFnDependencyNode.setObject(self.activeEffector)
-	            mPlugArray_effector = OpenMaya.MPlugArray()
-	            mFnDependencyNode.getConnections(mPlugArray_effector)
-	            for i in xrange(mPlugArray_effector.length()):
-	                mPlug_effector = mPlugArray_effector[i]
-	                mPlugArray2 = OpenMaya.MPlugArray()
-	                mPlug_effector.connectedTo(mPlugArray2,True,True)
-	                mPlug2 = mPlugArray2[0]
-	                if mPlug2.node().apiTypeStr() == "kIkHandle":
-	                    self.activeHandle = mPlug2.node()
-	                    
-	                    break
-	            
-	            
-	            ''' If IK-Handle is found then :
-	                - find IK-Blend Plug
-	                - find IK-PoleVector 
-	            '''                 
-	            
-	            if self.activeHandle.apiTypeStr() == "kIkHandle": 
-	                # 4. Find IK-Blend Plug
-	                mFnDependNodeHandle = OpenMaya.MFnDependencyNode(self.activeHandle)
-	                print "IKHANDLE2"
-	                print mFnDependNodeHandle.name()
-	                ikhandles.append(mFnDependNodeHandle.name())
-	                print ikhandles
-	                print ikhandles[0]
 
+	    print "Getting IK Handles"
+	   
+        d = OpenMaya.MItDependencyNodes()
+        mFnDependencyNode = OpenMaya.MFnDependencyNode()
+        while(not d.isDone()):
+            mObj = d.thisNode()
+            if mObj.apiTypeStr() == 'kIkHandle':
+                m = OpenMaya.MFnDependencyNode(mObj)
+                print m.name()
+                ikhandles.append(m.name())
+                print ikhandles
+                print ikhandles[0]
+        
+            d.next()
+            
 
 class CVG(OpenMayaMPx.MPxNode):
 	idCallback = []
@@ -230,8 +183,6 @@ class CVG(OpenMayaMPx.MPxNode):
 	            if self.activeHandle.apiTypeStr() == "kIkHandle": 
 	                # 4. Find IK-Blend Plug
 	                mFnDependNodeHandle = OpenMaya.MFnDependencyNode(self.activeHandle)
-	                print "IKHANDLE2"
-	                print mFnDependNodeHandle.name()
 	                mPlug_blendAttr = mFnDependNodeHandle.findPlug("ikBlend")
 	                mAttr_blendAttr = mPlug_blendAttr.attribute() 
 	                # make IK-blend attribute "unKeyable" and hidden from Channel box
