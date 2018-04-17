@@ -50,7 +50,7 @@ class BasicDialog(QtWidgets.QDialog):
 
         cmd(name=str(self.nameLE.text()))
 
-BasicDialog().show()
+
 
 # =====================================================================
 # Special Thanks to Chayan Vinayak for starter code and videos
@@ -425,6 +425,8 @@ def initializePlugin(mobject):
     except:
         sys.stderr.write("Failed to register node: %s" % nodeName)
         raise
+        
+    BasicDialog().show()
 
 def uninitializePlugin(mobject):
     mplugin = OpenMayaMPx.MFnPlugin(mobject)
