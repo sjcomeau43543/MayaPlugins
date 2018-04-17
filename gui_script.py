@@ -1,8 +1,19 @@
-import maya.cmds as cmds
 
+# =====================================================================
+# Special Thanks to Chayan Vinayak for starter code and videos
+#
+# =====================================================================
+import sys
+import maya.OpenMaya as OpenMaya
+import maya.OpenMayaMPx as OpenMayaMPx
+import maya.cmds as cmds
 import maya.OpenMayaUI as mui
 from PySide2 import QtCore, QtGui, QtWidgets
 import shiboken2
+
+nodeName = "CVGKNode"
+nodeId = OpenMaya.MTypeId(0x100fff)
+ikhandles = []
 
 def getMayaWindow():
     ptr = mui.MQtUtil.mainWindow()
@@ -10,6 +21,9 @@ def getMayaWindow():
 
 class BasicDialog(QtWidgets.QDialog):
     def __init__(self, parent=getMayaWindow()):
+        
+        cmds.GetIKHandles()
+        
         super(BasicDialog, self).__init__(parent)
         self.setWindowTitle('Maya PyQt Basic Dialog Demo')
         self.shapeTypeCB = QtWidgets.QComboBox(parent=self)
@@ -50,21 +64,6 @@ class BasicDialog(QtWidgets.QDialog):
 
         cmd(name=str(self.nameLE.text()))
 
-
-
-# =====================================================================
-# Special Thanks to Chayan Vinayak for starter code and videos
-#
-# =====================================================================
-
-
-import sys
-import maya.OpenMaya as OpenMaya
-import maya.OpenMayaMPx as OpenMayaMPx
-
-nodeName = "CVGKNode"
-nodeId = OpenMaya.MTypeId(0x100fff)
-ikhandles = []
 
 
 class GetIKHandles(OpenMayaMPx.MPxCommand):
