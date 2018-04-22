@@ -5,14 +5,13 @@ import maya.OpenMayaMPx as OpenMayaMPx
 import maya.cmds as cmds
 import maya.OpenMayaUI as mui
 from PySide2 import QtCore, QtGui, QtWidgets
-import PySide2 as pys2
 import shiboken2
 
 # Global variables
 nodeName = "CVGKNode"
 nodeId = OpenMaya.MTypeId(0x100fff)
 
-ikhandles = ['LeftArmShoulder', 'LeftArmElbow', 'LeftArmHand', 'LeftArmFinger1', 'Thesearejustexamples']
+ikhandles = []
 selectedIK = []
 
 # get a UI window to put our data in
