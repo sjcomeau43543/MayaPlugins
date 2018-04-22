@@ -11,16 +11,21 @@ import shiboken2
 # Global variables
 nodeName = "CVGKNode"
 nodeId = OpenMaya.MTypeId(0x100fff)
-ikhandles = ['LeftArmShoulder', 'LeftArmElbow', 'LeftArmHand', 'LeftArmFinger1', 'Thesearejustexamples']
 
+ikhandles = ['LeftArmShoulder', 'LeftArmElbow', 'LeftArmHand', 'LeftArmFinger1', 'Thesearejustexamples']
+selectedIK = []
+
+# get a UI window to put our data in
 def getMayaWindow():
     ptr = mui.MQtUtil.mainWindow()
     return shiboken2.wrapInstance(long(ptr), QtWidgets.QWidget)
 
-#Contentes of the popup
+# Contentes of the popup
 class BasicDialog(QtWidgets.QDialog):
     def __init__(self, parent=getMayaWindow()):
         cmds.GetIKHandles()
+        global previousikhandles 
+        previousikhandles = ikhandles
         
         super(BasicDialog, self).__init__(parent)
         self.setWindowTitle('Maya PyQt Basic Dialog Demo')  
@@ -39,49 +44,58 @@ class BasicDialog(QtWidgets.QDialog):
             newcheckbox = QtWidgets.QCheckBox(ikhandles[i], parent=self)
             newcheckbox.setObjectName(ikhandles[i])
             newcheckbox.move(10, i*25+35)
+            newcheckbox.stateChanged.connect(self.submitToList)
             newcheckbox.show()
             newcheckbox = None
-          
-      
-        # add the submit changes button
-        submitBtn = QtWidgets.QPushButton('Apply Changes', parent=self)
-        submitBtn.move(10, i*25+60)
-        submitBtn.show()
-        submitBtn.clicked.connect(self.submitList)
-        submitBtn = None 
+     
         
-    def updateList(arg):
+    # check to see if there are any new IK handles added to the scene and add them to the list 
+    # on the widget
+    def updateList(clicked):
         print('----------------------------------------------------')
         print('Updating List')
+        print(previous)
         
+        # update the ikhandles list based on what is in the scene currently
         cmds.GetIKHandles()
         
+        # REMOVE LATER
         ikhandles.append('happiness')
-        
-        for i in  range(len(ikhandles)):
-            print ikhandles[i]
-            '''
-            newcheckbox = QtWidgets.QCheckBox(ikhandles[i], parent=self)
-            newcheckbox.setObjectName(ikhandles[i])
+
+        # check what new handles there are compared to last time we checked
+        changes = list(set(ikhandles) - set(previous))
+        #for i in  range(len(changes)):
+        #    print(changes)
+        '''
+        # is it a new node?
+        if changes[i] in ikhandles:
+            newcheckbox = QtWidgets.QCheckBox(changes[i], parent=self)
+            newcheckbox.setObjectName(changes[i])
             newcheckbox.move(10, i*25+25)
             newcheckbox.show()
             newcheckbox = None
-            '''
-        print('----------------------------------------------------')
-        
-    def submitList(arg):
-        print('----------------------------------------------------')
-        print('Submitting List')
-        
-        for child in arg.children():
-            print(type(child))
-            print(type(pys2.QtWidgets.QPushButton))
-            if type(child) is type(pys2.QtWidgets.QPushButton):
-                print child
-                
-        print dir(arg.children()[0])
+        # is it an removed node
+        else:
+            print("removed")
+        '''
+            
+        # set the current known handles
+        previous = ikhandles
         print('----------------------------------------------------')
 
+        
+    def submitToList(self, arg):
+        print('----------------------------------------------------')
+        print('submit to list')
+        
+        checkbox = self.sender()
+        print(dir(checkbox))
+        
+        selectedIK.append(checkbox)
+        print(selectedIK)
+        print('----------------------------------------------------')
+        
+        
 #Getes all the IK Handles in the scene
 class GetIKHandles(OpenMayaMPx.MPxCommand):
 	
