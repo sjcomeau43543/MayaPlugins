@@ -82,11 +82,9 @@ def GetIKHandles():
 
     d.reset()
     while(not d.isDone()):
-        print "node"
         mObj = d.thisNode()
         if mObj.apiTypeStr() == 'kIkHandle':
             m = OpenMaya.MFnDependencyNode(mObj)
-            print m.name()
             ikhandles.append(m.name())
             print ikhandles
         d.next()
@@ -185,10 +183,6 @@ class CVG(OpenMayaMPx.MPxNode):
 	                        self.activePoleVector = mPlug2.node()
 	                        break
 
-
-	                ''' If IK-PoleVector is found then :
-	                    - find IK-PoleVector Control Curve
-	                '''
 	                # If IK pole vector found, find the curve
 	                if self.activePoleVector.apiTypeStr() == "kPoleVectorConstraint":
 	                    mFnDependencyNode.setObject(self.activePoleVector)
@@ -203,10 +197,6 @@ class CVG(OpenMayaMPx.MPxNode):
 	                            self.activePoleVectorControl = mPlug2.node()
 	                            break
 
-
-	                    ''' If IK-PoleVector Control Curve is found then :
-	                        - find middle joint of joint change, to which this control should be attached.
-	                    '''
 	                    # If the control curve is found, find middle joint of the chain
 	                    if self.activePoleVectorControl.apiTypeStr() == "kTransform":
 	                        mFnDependencyNode.setObject(self.activeEffector)
