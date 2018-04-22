@@ -41,8 +41,6 @@ class BasicDialog(QtWidgets.QDialog):
 
         # Add all the ikhandles that were loaded
         for i in range(len(ikhandles)):
-            print ikhandles[i]
-
             newcheckbox = QtWidgets.QCheckBox(ikhandles[i], parent=self)
             newcheckbox.setObjectName(ikhandles[i])
             newcheckbox.stateChanged.connect(self.submitToList)
@@ -55,7 +53,6 @@ class BasicDialog(QtWidgets.QDialog):
         while self.layout().count():
             item = self.layout().takeAt(0)
             widget = item.widget()
-            print(item, widget, self.layout().count())
             if widget is not None:
                 widget.deleteLater()
         self.makeUI()
@@ -74,8 +71,6 @@ def GetIKHandles():
     global ikhandles
     ikhandles = []
 
-    print "Getting IK Handles"
-
     d = OpenMaya.MItDependencyNodes()
     mFnDependencyNode = OpenMaya.MFnDependencyNode()
 
@@ -85,7 +80,6 @@ def GetIKHandles():
         if mObj.apiTypeStr() == 'kIkHandle':
             m = OpenMaya.MFnDependencyNode(mObj)
             ikhandles.append(m.name())
-            print ikhandles
         d.next()
 
 #IK-FK Blend
@@ -265,7 +259,6 @@ class CVG(OpenMayaMPx.MPxNode):
 	                mPlug_controlCurveVisibility = OpenMaya.MFnTransform(self.activePoleVectorControl).findPlug("visibility")
 
 	            m = OpenMaya.MFnDependencyNode(self.activeHandle)
-	            print m.name()
 	            for i in range(len(selectedIK)):
 	                if m.name() == selectedIK[i-1]:
 
