@@ -54,6 +54,7 @@ class BasicDialog(QtWidgets.QDialog):
 
     def updateList(self):
         cmds.GetIKHandles()
+        shiboken2.delete(self.layout())
         self.makeUI()
         self.show()
 
