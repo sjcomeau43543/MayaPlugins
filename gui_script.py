@@ -32,6 +32,7 @@ class BasicDialog(QtWidgets.QDialog):
         self.makeUI()
         self.show()
 
+    # creates the UI
     def makeUI(self):
         layout = QtWidgets.QVBoxLayout()
 
@@ -52,21 +53,20 @@ class BasicDialog(QtWidgets.QDialog):
 
         self.setLayout(layout)
 
+    # updates the list of IK handles in the scene
     def updateList(self):
         GetIKHandles()
+        shiboken2.delete(self.layout())
         self.makeUI()
         self.show()
 
-    def submitToList(self):
-        print('----------------------------------------------------')
-        print('submit to list')
-
+    # adds the IK handle to the list of handles to apply the plugin to
+    def submitToList(self, checked):
         checkbox = self.sender()
-        print(dir(checkbox))
-
-        selectedIK.append(checkbox)
-        print(selectedIK)
-        print('----------------------------------------------------')
+        if(checked):
+            selectedIK.append(checkbox.objectName().encode("utf-8"))
+        else:
+            selectedIK.remove(checkbox.objectName().encode("utf-8"))
 
 
 def GetIKHandles():
