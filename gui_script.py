@@ -12,6 +12,7 @@ import shiboken2
 nodeName = "CVGKNode"
 nodeId = OpenMaya.MTypeId(0x100fff)
 ikhandles = ['LeftArmShoulder', 'LeftArmElbow', 'LeftArmHand', 'LeftArmFinger1', 'Thesearejustexamples']
+selectedIK = ["Happiness", "ikHandle1"]
 
 def getMayaWindow():
     ptr = mui.MQtUtil.mainWindow()
@@ -20,7 +21,10 @@ def getMayaWindow():
 #Contentes of the popup
 class BasicDialog(QtWidgets.QDialog):
     def __init__(self, parent=getMayaWindow()):
+        global ikhandles
+        
         cmds.GetIKHandles()
+        cmds.createNode("CVGKNode")
         
         super(BasicDialog, self).__init__(parent)
         self.setWindowTitle('Maya PyQt Basic Dialog Demo')  
@@ -51,6 +55,7 @@ class BasicDialog(QtWidgets.QDialog):
         submitBtn = None 
         
     def updateList(arg):
+        global ikhandles
         print('----------------------------------------------------')
         print('Updating List')
         
@@ -92,6 +97,7 @@ class GetIKHandles(OpenMayaMPx.MPxCommand):
 		OpenMayaMPx.MPxCommand.__init__(self)
 		
 	def doIt(self,*args):
+	    global ikhandles
 	    ikhandles = []
 
 	    print "Getting IK Handles"
@@ -295,34 +301,39 @@ class CVG(OpenMayaMPx.MPxNode):
 	            if self.activePoleVectorControl.apiTypeStr() != "kInvalid":
 	                mPlug_controlCurveVisibility = OpenMaya.MFnTransform(self.activePoleVectorControl).findPlug("visibility")
 	            
+	            m = OpenMaya.MFnDependencyNode(self.activeHandle)
+	            print m.name()
+	            global selectedIK
+	            for i in range(len(selectedIK)):
+	                if m.name() == selectedIK[i-1]:
 	            
-	            if mode=='fk':
-	                # Because fk is the default mode, even if IK-handle does not exist it will try to set the plug
-	                try:
-	                    mPlug_blendAttr.setInt(0)
-	                    mPlug_controlCurveVisibility.setBool(False)
-	                except:
-	                    pass
-	            else:
-	                if self.joint2.apiTypeStr() == "kJoint":
-	                    mFnTransform_poleControl = OpenMaya.MFnTransform(self.activePoleVectorControl)
-	                    mFnTransform_joint2 = OpenMaya.MFnTransform(self.joint2)
-	                    
-	                    # Reading MDagPath from MObject.
-	                    mDagPath_joint2 = OpenMaya.MDagPath()
-	                    mFnTransform_joint2.getPath(mDagPath_joint2)
-	                    mFnTransform_joint2.setObject(mDagPath_joint2)
-	                                        
-	                    mDagPath_poleControl = OpenMaya.MDagPath()
-	                    mFnTransform_poleControl.getPath(mDagPath_poleControl)
-	                    mFnTransform_poleControl.setObject(mDagPath_poleControl)                   
-	                    
-	                    mFnTransform_poleControl.setTranslation(mFnTransform_joint2.getTranslation(OpenMaya.MSpace.kWorld),OpenMaya.MSpace.kWorld)
-	                    try:
-	                        mPlug_controlCurveVisibility.setBool(True)
-	                    except:
-	                        pass
-	                mPlug_blendAttr.setInt(1)    
+        	            if mode=='fk':
+        	                # Because fk is the default mode, even if IK-handle does not exist it will try to set the plug
+        	                try:
+        	                    mPlug_blendAttr.setInt(0)
+        	                    mPlug_controlCurveVisibility.setBool(False)
+        	                except:
+        	                    pass
+        	            else:
+        	                if self.joint2.apiTypeStr() == "kJoint":
+        	                    mFnTransform_poleControl = OpenMaya.MFnTransform(self.activePoleVectorControl)
+        	                    mFnTransform_joint2 = OpenMaya.MFnTransform(self.joint2)
+        	                    
+        	                    # Reading MDagPath from MObject.
+        	                    mDagPath_joint2 = OpenMaya.MDagPath()
+        	                    mFnTransform_joint2.getPath(mDagPath_joint2)
+        	                    mFnTransform_joint2.setObject(mDagPath_joint2)
+        	                                        
+        	                    mDagPath_poleControl = OpenMaya.MDagPath()
+        	                    mFnTransform_poleControl.getPath(mDagPath_poleControl)
+        	                    mFnTransform_poleControl.setObject(mDagPath_poleControl)                   
+        	                    
+        	                    mFnTransform_poleControl.setTranslation(mFnTransform_joint2.getTranslation(OpenMaya.MSpace.kWorld),OpenMaya.MSpace.kWorld)
+        	                    try:
+        	                        mPlug_controlCurveVisibility.setBool(True)
+        	                    except:
+        	                        pass
+        	                mPlug_blendAttr.setInt(1)    
 
 		
 	def remove(self,*args):
