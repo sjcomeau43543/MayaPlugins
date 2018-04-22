@@ -1,77 +1,100 @@
-
-# =====================================================================
-# Special Thanks to Chayan Vinayak for starter code and videos
-#
-# =====================================================================
+# Imports
 import sys
 import maya.OpenMaya as OpenMaya
 import maya.OpenMayaMPx as OpenMayaMPx
 import maya.cmds as cmds
 import maya.OpenMayaUI as mui
 from PySide2 import QtCore, QtGui, QtWidgets
+import PySide2 as pys2
 import shiboken2
 
+# Global variables
 nodeName = "CVGKNode"
 nodeId = OpenMaya.MTypeId(0x100fff)
-ikhandles = []
+ikhandles = ['LeftArmShoulder', 'LeftArmElbow', 'LeftArmHand', 'LeftArmFinger1', 'Thesearejustexamples']
 
+# UI for FK/IK
 def getMayaWindow():
     ptr = mui.MQtUtil.mainWindow()
     return shiboken2.wrapInstance(long(ptr), QtWidgets.QWidget)
 
 class BasicDialog(QtWidgets.QDialog):
     def __init__(self, parent=getMayaWindow()):
-        
         cmds.GetIKHandles()
         
         super(BasicDialog, self).__init__(parent)
-        self.setWindowTitle('Maya PyQt Basic Dialog Demo')
-        self.shapeTypeCB = QtWidgets.QComboBox(parent=self)
-        self.nameLE = QtWidgets.QLineEdit('newShape', parent=self)
-        self.makeButton = QtWidgets.QPushButton("Make Shape", parent=self)
-        self.descLabel = QtWidgets.QLabel("This is a description", parent=self)
+        self.setWindowTitle('Maya PyQt Basic Dialog Demo')  
         
-        self.shapeTypeCB.addItems(['Sphere', 'Cube', 'Cylinder'])
         
-        self.connect(self.shapeTypeCB, QtCore.SIGNAL("currentIndexChanged(int)"), self.updateDescription)
-        self.connect(self.nameLE, QtCore.SIGNAL("textChanged(const QString&)"), self.updateDescription)
-        self.connect(self.makeButton, QtCore.SIGNAL("clicked()"), self.makeShape)
+        # add the update ik handles button
+        updateBtn = QtWidgets.QPushButton('Update List', parent=self)
+        updateBtn.move(10, 5)
+        updateBtn.show()
+        updateBtn.clicked.connect(self.updateList)
+        updateBtn = None
         
-        actionLayout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.LeftToRight)
-        actionLayout.addWidget(self.shapeTypeCB)
-        actionLayout.addWidget(self.nameLE)
-        actionLayout.addWidget(self.makeButton)
+        # Add all the ikhandles that were loaded
+        for i in range(len(ikhandles)):
+            print ikhandles[i]
+            
+            newcheckbox = QtWidgets.QCheckBox(ikhandles[i], parent=self)
+            newcheckbox.setObjectName(ikhandles[i])
+            newcheckbox.move(10, i*25+35)
+            newcheckbox.show()
+            newcheckbox = None
+          
+      
+        # add the submit changes button
+        submitBtn = QtWidgets.QPushButton('Apply Changes', parent=self)
+        submitBtn.move(10, i*25+60)
+        submitBtn.show()
+        submitBtn.clicked.connect(self.submitList)
+        submitBtn = None 
         
-        self.updateDescription()
-
-        self.layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.TopToBottom, self)
-        self.layout.addLayout(actionLayout)
-        self.layout.addWidget(self.descLabel)
-    
-    def updateDescription(self):
-        description = 'Make a %s named "%s"' % (self.shapeTypeCB.currentText(), self.nameLE.text())
-        self.descLabel.setText(description)
+    def updateList(arg):
+        print('----------------------------------------------------')
+        print('Updating List')
         
-    def makeShape(self):
-        objType = self.shapeTypeCB.currentText()
+        cmds.GetIKHandles()
+        
+        ikhandles.append('happiness')
+        
+        for i in  range(len(ikhandles)):
+            print ikhandles[i]
+            '''
+            newcheckbox = QtWidgets.QCheckBox(ikhandles[i], parent=self)
+            newcheckbox.setObjectName(ikhandles[i])
+            newcheckbox.move(10, i*25+25)
+            newcheckbox.show()
+            newcheckbox = None
+            '''
+        print('----------------------------------------------------')
+        
+    def submitList(arg):
+        print('----------------------------------------------------')
+        print('Submitting List')
+        
+        for child in arg.children():
+            print(type(child))
+            print(type(pys2.QtWidgets.QPushButton))
+            if type(child) is type(pys2.QtWidgets.QPushButton):
+                print child
+                
+        print dir(arg.children()[0])
+        print('----------------------------------------------------')
+        
+         
 
-        if objType == 'Sphere':
-            cmd = cmds.polySphere
-        elif objType == 'Cube':
-            cmd = cmds.polyCube
-        else:
-            cmd = cmds.polyCylinder
-
-        cmd(name=str(self.nameLE.text()))
-
-
-
+# Plugin for FK/IK
+# =====================================================================
+# Special Thanks to Chayan Vinayak for starter code and videos
+#
+# =====================================================================
 class GetIKHandles(OpenMayaMPx.MPxCommand):
 	
 	activeEffector = OpenMaya.MObject()
 	activeHandle = OpenMaya.MObject()
 	
-		
 	def __init__(self):
 		OpenMayaMPx.MPxCommand.__init__(self)
 		
