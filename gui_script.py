@@ -27,18 +27,17 @@ class BasicDialog(QtWidgets.QDialog):
 
         super(BasicDialog, self).__init__(parent)
         self.setWindowTitle('Maya PyQt Basic Dialog Demo')
+        self.setLayout(QtWidgets.QVBoxLayout())
 
         self.makeUI()
         self.show()
 
     # creates the UI
     def makeUI(self):
-        layout = QtWidgets.QVBoxLayout()
-
         # add the update ik handles button
         updateBtn = QtWidgets.QPushButton('Update List', parent=self)
         updateBtn.clicked.connect(self.updateList)
-        layout.addWidget(updateBtn)
+        self.layout().addWidget(updateBtn)
 
         # Add all the ikhandles that were loaded
         for i in range(len(ikhandles)):
@@ -47,15 +46,18 @@ class BasicDialog(QtWidgets.QDialog):
             newcheckbox = QtWidgets.QCheckBox(ikhandles[i], parent=self)
             newcheckbox.setObjectName(ikhandles[i])
             newcheckbox.stateChanged.connect(self.submitToList)
-            layout.addStretch()
-            layout.addWidget(newcheckbox)
-
-        self.setLayout(layout)
+            self.layout().addStretch()
+            self.layout().addWidget(newcheckbox)
 
     # updates the list of IK handles in the scene
     def updateList(self):
         GetIKHandles()
-        shiboken2.delete(self.layout())
+        while self.layout().count():
+            item = self.layout().takeAt(0)
+            widget = item.widget()
+            print(item, widget, self.layout().count())
+            if widget is not None:
+                widget.deleteLater()
         self.makeUI()
         self.show()
 
@@ -71,19 +73,17 @@ class BasicDialog(QtWidgets.QDialog):
 def GetIKHandles():
     global ikhandles
     ikhandles = []
-    
+
     print "Getting IK Handles"
-    
+
     d = OpenMaya.MItDependencyNodes()
     mFnDependencyNode = OpenMaya.MFnDependencyNode()
-            
+
     d.reset()
     while(not d.isDone()):
-        print "node"
         mObj = d.thisNode()
         if mObj.apiTypeStr() == 'kIkHandle':
             m = OpenMaya.MFnDependencyNode(mObj)
-            print m.name()
             ikhandles.append(m.name())
             print ikhandles
         d.next()
@@ -182,10 +182,6 @@ class CVG(OpenMayaMPx.MPxNode):
 	                        self.activePoleVector = mPlug2.node()
 	                        break
 
-
-	                ''' If IK-PoleVector is found then :
-	                    - find IK-PoleVector Control Curve
-	                '''
 	                # If IK pole vector found, find the curve
 	                if self.activePoleVector.apiTypeStr() == "kPoleVectorConstraint":
 	                    mFnDependencyNode.setObject(self.activePoleVector)
@@ -200,10 +196,6 @@ class CVG(OpenMayaMPx.MPxNode):
 	                            self.activePoleVectorControl = mPlug2.node()
 	                            break
 
-
-	                    ''' If IK-PoleVector Control Curve is found then :
-	                        - find middle joint of joint change, to which this control should be attached.
-	                    '''
 	                    # If the control curve is found, find middle joint of the chain
 	                    if self.activePoleVectorControl.apiTypeStr() == "kTransform":
 	                        mFnDependencyNode.setObject(self.activeEffector)
