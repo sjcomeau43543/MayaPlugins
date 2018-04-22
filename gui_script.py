@@ -11,30 +11,36 @@ import shiboken2
 # Global variables
 nodeName = "CVGKNode"
 nodeId = OpenMaya.MTypeId(0x100fff)
-ikhandles = ['LeftArmShoulder', 'LeftArmElbow', 'LeftArmHand', 'LeftArmFinger1', 'Thesearejustexamples']
-selectedIK = ["Happiness", "ikHandle1"]
 
+ikhandles = ['LeftArmShoulder', 'LeftArmElbow', 'LeftArmHand', 'LeftArmFinger1', 'Thesearejustexamples']
+selectedIK = []
+
+# get a UI window to put our data in
 def getMayaWindow():
     ptr = mui.MQtUtil.mainWindow()
     return shiboken2.wrapInstance(long(ptr), QtWidgets.QWidget)
 
-#Contentes of the popup
+# Contentes of the popup
 class BasicDialog(QtWidgets.QDialog):
     def __init__(self, parent=getMayaWindow()):
-        global ikhandles
-        
         cmds.GetIKHandles()
         cmds.createNode("CVGKNode")
-        
+
         super(BasicDialog, self).__init__(parent)
         self.setWindowTitle('Maya PyQt Basic Dialog Demo')
+
+        self.makeUI()
+        self.show()
+
+    def makeUI(self):
+        global ikhandles
+
         layout = QtWidgets.QVBoxLayout()
 
         # add the update ik handles button
         updateBtn = QtWidgets.QPushButton('Update List', parent=self)
         updateBtn.clicked.connect(self.updateList)
         layout.addWidget(updateBtn)
-        layout.addStretch()
 
         # Add all the ikhandles that were loaded
         for i in range(len(ikhandles)):
@@ -42,49 +48,28 @@ class BasicDialog(QtWidgets.QDialog):
 
             newcheckbox = QtWidgets.QCheckBox(ikhandles[i], parent=self)
             newcheckbox.setObjectName(ikhandles[i])
-            layout.addWidget(newcheckbox)
+            newcheckbox.stateChanged.connect(self.submitToList)
             layout.addStretch()
-
-        # add the submit changes button
-        submitBtn = QtWidgets.QPushButton('Apply Changes', parent=self)
-        submitBtn.clicked.connect(self.submitList)
-        layout.addWidget(submitBtn)
+            layout.addWidget(newcheckbox)
 
         self.setLayout(layout)
+
+    def updateList(self):
+        cmds.GetIKHandles()
+        self.makeUI()
         self.show()
 
-    def updateList(arg):
-        global ikhandles
+    def submitToList(self):
         print('----------------------------------------------------')
-        print('Updating List')
+        print('submit to list')
 
-        cmds.GetIKHandles()
+        checkbox = self.sender()
+        print(dir(checkbox))
 
-        ikhandles.append('happiness')
-
-        for i in  range(len(ikhandles)):
-            print ikhandles[i]
-            '''
-            newcheckbox = QtWidgets.QCheckBox(ikhandles[i], parent=self)
-            newcheckbox.setObjectName(ikhandles[i])
-            newcheckbox.move(10, i*25+25)
-            newcheckbox.show()
-            newcheckbox = None
-            '''
+        selectedIK.append(checkbox)
+        print(selectedIK)
         print('----------------------------------------------------')
 
-    def submitList(arg):
-        print('----------------------------------------------------')
-        print('Submitting List')
-
-        for child in arg.children():
-            print(type(child))
-            print(type(pys2.QtWidgets.QPushButton))
-            if type(child) is type(pys2.QtWidgets.QPushButton):
-                print child
-
-        print dir(arg.children()[0])
-        print('----------------------------------------------------')
 
 #Getes all the IK Handles in the scene
 class GetIKHandles(OpenMayaMPx.MPxCommand):
@@ -133,8 +118,6 @@ class CVG(OpenMayaMPx.MPxNode):
 		self.idCallback.append(OpenMaya.MDGMessage.addNodeRemovedCallback(self.remove,"dependNode"))
 
 	def callbackFunc(self,*args):
-	    print "Called"
-	    print "hi"
 	    # Gets active selection in the scene
 	    mSel = OpenMaya.MSelectionList()
 	    OpenMaya.MGlobal.getActiveSelectionList(mSel)
@@ -299,13 +282,13 @@ class CVG(OpenMayaMPx.MPxNode):
 	            # Control curve 'visibility' plug
 	            if self.activePoleVectorControl.apiTypeStr() != "kInvalid":
 	                mPlug_controlCurveVisibility = OpenMaya.MFnTransform(self.activePoleVectorControl).findPlug("visibility")
-	            
+
 	            m = OpenMaya.MFnDependencyNode(self.activeHandle)
 	            print m.name()
 	            global selectedIK
 	            for i in range(len(selectedIK)):
 	                if m.name() == selectedIK[i-1]:
-	            
+
         	            if mode=='fk':
         	                # Because fk is the default mode, even if IK-handle does not exist it will try to set the plug
         	                try:
@@ -317,22 +300,22 @@ class CVG(OpenMayaMPx.MPxNode):
         	                if self.joint2.apiTypeStr() == "kJoint":
         	                    mFnTransform_poleControl = OpenMaya.MFnTransform(self.activePoleVectorControl)
         	                    mFnTransform_joint2 = OpenMaya.MFnTransform(self.joint2)
-        	                    
+
         	                    # Reading MDagPath from MObject.
         	                    mDagPath_joint2 = OpenMaya.MDagPath()
         	                    mFnTransform_joint2.getPath(mDagPath_joint2)
         	                    mFnTransform_joint2.setObject(mDagPath_joint2)
-        	                                        
+
         	                    mDagPath_poleControl = OpenMaya.MDagPath()
         	                    mFnTransform_poleControl.getPath(mDagPath_poleControl)
-        	                    mFnTransform_poleControl.setObject(mDagPath_poleControl)                   
-        	                    
+        	                    mFnTransform_poleControl.setObject(mDagPath_poleControl)
+
         	                    mFnTransform_poleControl.setTranslation(mFnTransform_joint2.getTranslation(OpenMaya.MSpace.kWorld),OpenMaya.MSpace.kWorld)
         	                    try:
         	                        mPlug_controlCurveVisibility.setBool(True)
         	                    except:
         	                        pass
-        	                mPlug_blendAttr.setInt(1)    
+        	                mPlug_blendAttr.setInt(1)
 
 	def remove(self,*args):
 		try:
