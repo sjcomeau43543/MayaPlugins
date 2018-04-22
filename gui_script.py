@@ -13,18 +13,17 @@ nodeName = "CVGKNode"
 nodeId = OpenMaya.MTypeId(0x100fff)
 ikhandles = ['LeftArmShoulder', 'LeftArmElbow', 'LeftArmHand', 'LeftArmFinger1', 'Thesearejustexamples']
 
-# UI for FK/IK
 def getMayaWindow():
     ptr = mui.MQtUtil.mainWindow()
     return shiboken2.wrapInstance(long(ptr), QtWidgets.QWidget)
 
+#Contentes of the popup
 class BasicDialog(QtWidgets.QDialog):
     def __init__(self, parent=getMayaWindow()):
         cmds.GetIKHandles()
         
         super(BasicDialog, self).__init__(parent)
         self.setWindowTitle('Maya PyQt Basic Dialog Demo')  
-        
         
         # add the update ik handles button
         updateBtn = QtWidgets.QPushButton('Update List', parent=self)
@@ -82,14 +81,8 @@ class BasicDialog(QtWidgets.QDialog):
                 
         print dir(arg.children()[0])
         print('----------------------------------------------------')
-        
-         
 
-# Plugin for FK/IK
-# =====================================================================
-# Special Thanks to Chayan Vinayak for starter code and videos
-#
-# =====================================================================
+#Getes all the IK Handles in the scene
 class GetIKHandles(OpenMayaMPx.MPxCommand):
 	
 	activeEffector = OpenMaya.MObject()
@@ -100,72 +93,23 @@ class GetIKHandles(OpenMayaMPx.MPxCommand):
 		
 	def doIt(self,*args):
 	    ikhandles = []
-	    
-	    print "Called"
-	    print "hi"
+
 	    print "Getting IK Handles"
-	    # 1. Find active selection in the scene
-	    mSel = OpenMaya.MSelectionList()
-	    OpenMaya.MGlobal.getActiveSelectionList(mSel)
-	    mItSelectionList = OpenMaya.MItSelectionList(mSel,OpenMaya.MFn.kDagNode)
-	    
-	    mFnDependencyNode = OpenMaya.MFnDependencyNode()
-	    
-	    # 2. Find IK-Effector        
-	    while(not mItSelectionList.isDone()):
-	        mObj = OpenMaya.MObject()
-	        mItSelectionList.getDependNode(mObj)          
-	        mFnDependencyNode.setObject(mObj)
-	        mPlugArray_joint = OpenMaya.MPlugArray()
-	        mFnDependencyNode.getConnections(mPlugArray_joint)
-	        # Check If effector is connected to selected object
-	        for i in xrange(mPlugArray_joint.length()):
-	            mPlug_joint = mPlugArray_joint[i]
-	            mPlugArray2 = OpenMaya.MPlugArray()
-	            mPlug_joint.connectedTo(mPlugArray2,True,True)
-	            mPlug2 = mPlugArray2[0]
-	            if mPlug2.node().apiTypeStr() == "kIkEffector":
-	                self.activeEffector = mPlug2.node()
-	                mode = "ik"
-	                break
-	
-	            mItSelectionList.next()
-	        
-	        # 3. Find IK-Handle         
-	        #print self.activeEffector.apiTypeStr()      
-	        ''' If IK-Effector is found then :
-	            - find IK-Handle
-	        '''  
-	        if self.activeEffector.apiTypeStr() == "kIkEffector":
-	            mFnDependencyNode.setObject(self.activeEffector)
-	            mPlugArray_effector = OpenMaya.MPlugArray()
-	            mFnDependencyNode.getConnections(mPlugArray_effector)
-	            for i in xrange(mPlugArray_effector.length()):
-	                mPlug_effector = mPlugArray_effector[i]
-	                mPlugArray2 = OpenMaya.MPlugArray()
-	                mPlug_effector.connectedTo(mPlugArray2,True,True)
-	                mPlug2 = mPlugArray2[0]
-	                if mPlug2.node().apiTypeStr() == "kIkHandle":
-	                    self.activeHandle = mPlug2.node()
-	                    
-	                    break
-	            
-	            
-	            ''' If IK-Handle is found then :
-	                - find IK-Blend Plug
-	                - find IK-PoleVector 
-	            '''                 
-	            
-	            if self.activeHandle.apiTypeStr() == "kIkHandle": 
-	                # 4. Find IK-Blend Plug
-	                mFnDependNodeHandle = OpenMaya.MFnDependencyNode(self.activeHandle)
-	                print "IKHANDLE2"
-	                print mFnDependNodeHandle.name()
-	                ikhandles.append(mFnDependNodeHandle.name())
-	                print ikhandles
-	                print ikhandles[0]
-
-
+	   
+        d = OpenMaya.MItDependencyNodes()
+        mFnDependencyNode = OpenMaya.MFnDependencyNode()
+        while(not d.isDone()):
+            mObj = d.thisNode()
+            if mObj.apiTypeStr() == 'kIkHandle':
+                m = OpenMaya.MFnDependencyNode(mObj)
+                print m.name()
+                ikhandles.append(m.name())
+                print ikhandles
+                print ikhandles[0]
+        
+            d.next()
+            
+#IK-FK Blend
 class CVG(OpenMayaMPx.MPxNode):
 	idCallback = []
 	joint1 = OpenMaya.MObject()
@@ -179,15 +123,14 @@ class CVG(OpenMayaMPx.MPxNode):
 		
 	def __init__(self):
 		OpenMayaMPx.MPxNode.__init__(self)
-		# Event Callback 
+		# Callbacks
 		self.idCallback.append(OpenMaya.MEventMessage.addEventCallback("SelectionChanged",self.callbackFunc))
-		# DG Callback 
 		self.idCallback.append(OpenMaya.MDGMessage.addNodeRemovedCallback(self.remove,"dependNode"))
 		
 	def callbackFunc(self,*args):
 	    print "Called"
 	    print "hi"
-	    # 1. Find active selection in the scene
+	    # Gets active selection in the scene
 	    mSel = OpenMaya.MSelectionList()
 	    OpenMaya.MGlobal.getActiveSelectionList(mSel)
 	    mItSelectionList = OpenMaya.MItSelectionList(mSel,OpenMaya.MFn.kDagNode)
@@ -195,16 +138,16 @@ class CVG(OpenMayaMPx.MPxNode):
 	    
 	    mFnDependencyNode = OpenMaya.MFnDependencyNode()
 	    
-	    # 2. Find IK-Effector        
+	    # Find IK effector       
 	    while(not mItSelectionList.isDone()):
 	        mObj = OpenMaya.MObject()
 	        mItSelectionList.getDependNode(mObj)          
-	        # If effector itself is selected
+	        # If effector was selected, make mode ik
 	        if mObj.apiTypeStr() == "kIkEffector":
 	            self.activeEffector = mObj
 	            mode = "ik"
 	            break
-	        # If control curve is selected
+	        # If control curve was selected, also make mode ik
 	        if self.activePoleVectorControl.apiTypeStr() != "kInvalid":
 	            if OpenMaya.MFnDependencyNode(mObj).name() == OpenMaya.MFnDependencyNode(self.activePoleVectorControl).name():
 	                mode = "ik"
@@ -212,7 +155,7 @@ class CVG(OpenMayaMPx.MPxNode):
 	        mFnDependencyNode.setObject(mObj)
 	        mPlugArray_joint = OpenMaya.MPlugArray()
 	        mFnDependencyNode.getConnections(mPlugArray_joint)
-	        # Check If effector is connected to selected object
+	        # If effector is connected to what was selected, make mode ik
 	        for i in xrange(mPlugArray_joint.length()):
 	            mPlug_joint = mPlugArray_joint[i]
 	            mPlugArray2 = OpenMaya.MPlugArray()
@@ -225,11 +168,7 @@ class CVG(OpenMayaMPx.MPxNode):
 	
 	            mItSelectionList.next()
 	        
-	        # 3. Find IK-Handle         
-	        #print self.activeEffector.apiTypeStr()      
-	        ''' If IK-Effector is found then :
-	            - find IK-Handle
-	        '''  
+	        # Find IK Handle           
 	        if self.activeEffector.apiTypeStr() == "kIkEffector":
 	            mFnDependencyNode.setObject(self.activeEffector)
 	            mPlugArray_effector = OpenMaya.MPlugArray()
@@ -243,26 +182,17 @@ class CVG(OpenMayaMPx.MPxNode):
 	                    self.activeHandle = mPlug2.node()
 	                    
 	                    break
-	            
-	            
-	            ''' If IK-Handle is found then :
-	                - find IK-Blend Plug
-	                - find IK-PoleVector 
-	            '''                 
-	            
+	                          
+	            # If IK handle was found, find ik blend plug to make it unkeyable and hidden
 	            if self.activeHandle.apiTypeStr() == "kIkHandle": 
-	                # 4. Find IK-Blend Plug
 	                mFnDependNodeHandle = OpenMaya.MFnDependencyNode(self.activeHandle)
-	                print "IKHANDLE2"
-	                print mFnDependNodeHandle.name()
 	                mPlug_blendAttr = mFnDependNodeHandle.findPlug("ikBlend")
 	                mAttr_blendAttr = mPlug_blendAttr.attribute() 
-	                # make IK-blend attribute "unKeyable" and hidden from Channel box
 	                mMFnAttribute = OpenMaya.MFnAttribute(mAttr_blendAttr)
 	                mMFnAttribute.setKeyable(0)
 	                mMFnAttribute.setChannelBox(0)       
 	                
-	                # 5. Find Pole Vector Constraint
+	                # Find Pole Vector Constraint
 	                mFnDependencyNode.setObject(self.activeHandle)
 	                mPlugArray_handle = OpenMaya.MPlugArray()
 	                mFnDependencyNode.getConnections(mPlugArray_handle)
@@ -279,9 +209,8 @@ class CVG(OpenMayaMPx.MPxNode):
 	                ''' If IK-PoleVector is found then :
 	                    - find IK-PoleVector Control Curve
 	                '''
-	                                   
+	                # If IK pole vector found, find the curve                 
 	                if self.activePoleVector.apiTypeStr() == "kPoleVectorConstraint": 
-	                    # 6. Find Curve controlling Pole Vector
 	                    mFnDependencyNode.setObject(self.activePoleVector)
 	                    mPlugArray_handle = OpenMaya.MPlugArray()
 	                    mFnDependencyNode.getConnections(mPlugArray_handle)
@@ -297,14 +226,9 @@ class CVG(OpenMayaMPx.MPxNode):
 	                
 	                    ''' If IK-PoleVector Control Curve is found then :
 	                        - find middle joint of joint change, to which this control should be attached.
-	                    '''           
-	                    if self.activePoleVectorControl.apiTypeStr() == "kTransform":  
-	                        # 7. Find Joint2 of the chain.
-	                        # 7. a : find joint connected to IK-Effector - call it : Joint3
-	                        # 7. b : find joint connected to IK-Handle   - call it : Joint1
-	                        # 7. c : find joint connected to Joint1 and Joint3 - call it Joint2
-	                                                     
-	                        # 7. a : find joint connected to IK-Effector - call it : Joint3                    
+	                    '''        
+	                    # If the control curve is found, find middle joint of the chain   
+	                    if self.activePoleVectorControl.apiTypeStr() == "kTransform":                     
 	                        mFnDependencyNode.setObject(self.activeEffector)
 	                        mPlugArray_effector = OpenMaya.MPlugArray()
 	                        mFnDependencyNode.getConnections(mPlugArray_effector)
@@ -316,7 +240,7 @@ class CVG(OpenMayaMPx.MPxNode):
 	                            if mPlug2.node().apiTypeStr() == "kJoint":
 	                                self.joint3 = mPlug2.node()
 	                                break
-	                        # 7. b : find joint connected to IK-Handle   - call it : Joint1                  
+	                        # Finds joint connected to IK Handle                  
 	                        mFnDependencyNode.setObject(self.activeHandle)
 	                        mPlugArray_handle = OpenMaya.MPlugArray()
 	                        mFnDependencyNode.getConnections(mPlugArray_handle)
@@ -329,11 +253,7 @@ class CVG(OpenMayaMPx.MPxNode):
 	                                self.joint1 = mPlug2.node()
 	                                break
 	                         
-	                        # 7. c : find joint connected to Joint1 and Joint3 - call it Joint2
-	                        '''
-	                        Find joints connected to Joint1 , and if any joint which is connected to Joint1 is also connected to Joint3
-	                        then it is Joint2                       
-	                        '''
+	                        # Find joint connected to Joint1 and Joint3
 	                        mObj_joint1Connections = OpenMaya.MObjectArray()
 	                        mObj_joint3Connections = OpenMaya.MObjectArray()
 	                        
@@ -407,10 +327,9 @@ class CVG(OpenMayaMPx.MPxNode):
 		
 	def remove(self,*args):
 		try:
-			# Check if this node exists in the scene
 			OpenMaya.MSelectionList.add(self.thisMObject())
 		except:
-			# Remove callback 
+			# Remove callbacks 
 			for i in xrange(len(self.idCallback)):
 				try:
 					OpenMaya.MEventMessage.removeCallback(self.idCallback[i])
@@ -424,24 +343,29 @@ class CVG(OpenMayaMPx.MPxNode):
 
 	def compute(self, plug, dataBlock):
 		pass
-		
+
+#Creates the CVG node		
 def nodeCreator():
     nodePtr = OpenMayaMPx.asMPxPtr(CVG())
     return nodePtr
-    
+
+#Creates the GetIKHandles command
 def cmdCreator():
     return OpenMayaMPx.asMPxPtr(GetIKHandles())
 
 def nodeInitializer():
 	pass
     
+#Initializes the plugin
 def initializePlugin(mobject):
     mplugin = OpenMayaMPx.MFnPlugin(mobject,"Farley Maya Practicum", "1.0")
     
+    # Register GetIKHandles as a command
     try:
         mplugin.registerCommand("GetIKHandles", cmdCreator)
     except:
         sys.stderr.write("Failed to register command: GetIKHandles")
+    #Register CVG as a node
     try:
         mplugin.registerNode(nodeName, nodeId, nodeCreator, nodeInitializer)
     except:
@@ -450,6 +374,7 @@ def initializePlugin(mobject):
         
     BasicDialog().show()
 
+#Uninstalls the plugin
 def uninitializePlugin(mobject):
     mplugin = OpenMayaMPx.MFnPlugin(mobject)
     try:
