@@ -23,7 +23,7 @@ def getMayaWindow():
 # Contentes of the popup
 class BasicDialog(QtWidgets.QDialog):
     def __init__(self, parent=getMayaWindow()):
-        cmds.GetIKHandles()
+        GetIKHandles()
         cmds.createNode("CVGKNode")
 
         super(BasicDialog, self).__init__(parent)
@@ -53,7 +53,7 @@ class BasicDialog(QtWidgets.QDialog):
         self.setLayout(layout)
 
     def updateList(self):
-        cmds.GetIKHandles()
+        GetIKHandles()
         self.makeUI()
         self.show()
 
@@ -69,31 +69,25 @@ class BasicDialog(QtWidgets.QDialog):
         print('----------------------------------------------------')
 
 
-#Getes all the IK Handles in the scene
-class GetIKHandles(OpenMayaMPx.MPxCommand):
-
-	activeEffector = OpenMaya.MObject()
-	activeHandle = OpenMaya.MObject()
-
-	def __init__(self):
-		OpenMayaMPx.MPxCommand.__init__(self)
-
-	def doIt(self,*args):
-	    ikhandles = []
-
-	    print "Getting IK Handles"
-
-        d = OpenMaya.MItDependencyNodes()
-        mFnDependencyNode = OpenMaya.MFnDependencyNode()
-        while(not d.isDone()):
-            mObj = d.thisNode()
-            if mObj.apiTypeStr() == 'kIkHandle':
-                m = OpenMaya.MFnDependencyNode(mObj)
-                print m.name()
-                ikhandles.append(m.name())
-                print ikhandles
-
-            d.next()
+def GetIKHandles():
+    global ikhandles
+    ikhandles = []
+    
+    print "Getting IK Handles"
+    
+    d = OpenMaya.MItDependencyNodes()
+    mFnDependencyNode = OpenMaya.MFnDependencyNode()
+            
+    d.reset()
+    while(not d.isDone()):
+        print "node"
+        mObj = d.thisNode()
+        if mObj.apiTypeStr() == 'kIkHandle':
+            m = OpenMaya.MFnDependencyNode(mObj)
+            print m.name()
+            ikhandles.append(m.name())
+            print ikhandles
+        d.next()
 
 #IK-FK Blend
 class CVG(OpenMayaMPx.MPxNode):
@@ -336,10 +330,6 @@ def nodeCreator():
     nodePtr = OpenMayaMPx.asMPxPtr(CVG())
     return nodePtr
 
-#Creates the GetIKHandles command
-def cmdCreator():
-    return OpenMayaMPx.asMPxPtr(GetIKHandles())
-
 def nodeInitializer():
 	pass
 
@@ -347,11 +337,6 @@ def nodeInitializer():
 def initializePlugin(mobject):
     mplugin = OpenMayaMPx.MFnPlugin(mobject,"Farley Maya Practicum", "1.0")
 
-    # Register GetIKHandles as a command
-    try:
-        mplugin.registerCommand("GetIKHandles", cmdCreator)
-    except:
-        sys.stderr.write("Failed to register command: GetIKHandles")
     #Register CVG as a node
     try:
         mplugin.registerNode(nodeName, nodeId, nodeCreator, nodeInitializer)
@@ -364,10 +349,7 @@ def initializePlugin(mobject):
 #Uninstalls the plugin
 def uninitializePlugin(mobject):
     mplugin = OpenMayaMPx.MFnPlugin(mobject)
-    try:
-        mplugin.deregisterCommand("GetIKHandles")
-    except:
-        sys.stderr.write("Failed to deregister command: GetIKHandles")
+
     try:
         mplugin.deregisterNode(nodeId)
     except:
