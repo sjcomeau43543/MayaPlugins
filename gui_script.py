@@ -56,6 +56,7 @@ class BasicDialog(QtWidgets.QDialog):
     # updates the list of IK handles in the scene
     def updateList(self):
         cmds.GetIKHandles()
+        shiboken2.delete(self.layout())
         self.makeUI()
         self.show()
 
