@@ -27,42 +27,41 @@ class BasicDialog(QtWidgets.QDialog):
         cmds.createNode("CVGKNode")
         
         super(BasicDialog, self).__init__(parent)
-        self.setWindowTitle('Maya PyQt Basic Dialog Demo')  
-        
+        self.setWindowTitle('Maya PyQt Basic Dialog Demo')
+        layout = QtWidgets.QVBoxLayout()
+
         # add the update ik handles button
         updateBtn = QtWidgets.QPushButton('Update List', parent=self)
-        updateBtn.move(10, 5)
-        updateBtn.show()
         updateBtn.clicked.connect(self.updateList)
-        updateBtn = None
-        
+        layout.addWidget(updateBtn)
+        layout.addStretch()
+
         # Add all the ikhandles that were loaded
         for i in range(len(ikhandles)):
             print ikhandles[i]
-            
+
             newcheckbox = QtWidgets.QCheckBox(ikhandles[i], parent=self)
             newcheckbox.setObjectName(ikhandles[i])
-            newcheckbox.move(10, i*25+35)
-            newcheckbox.show()
-            newcheckbox = None
-          
-      
+            layout.addWidget(newcheckbox)
+            layout.addStretch()
+
         # add the submit changes button
         submitBtn = QtWidgets.QPushButton('Apply Changes', parent=self)
-        submitBtn.move(10, i*25+60)
-        submitBtn.show()
         submitBtn.clicked.connect(self.submitList)
-        submitBtn = None 
-        
+        layout.addWidget(submitBtn)
+
+        self.setLayout(layout)
+        self.show()
+
     def updateList(arg):
         global ikhandles
         print('----------------------------------------------------')
         print('Updating List')
-        
+
         cmds.GetIKHandles()
-        
+
         ikhandles.append('happiness')
-        
+
         for i in  range(len(ikhandles)):
             print ikhandles[i]
             '''
@@ -73,35 +72,35 @@ class BasicDialog(QtWidgets.QDialog):
             newcheckbox = None
             '''
         print('----------------------------------------------------')
-        
+
     def submitList(arg):
         print('----------------------------------------------------')
         print('Submitting List')
-        
+
         for child in arg.children():
             print(type(child))
             print(type(pys2.QtWidgets.QPushButton))
             if type(child) is type(pys2.QtWidgets.QPushButton):
                 print child
-                
+
         print dir(arg.children()[0])
         print('----------------------------------------------------')
 
 #Getes all the IK Handles in the scene
 class GetIKHandles(OpenMayaMPx.MPxCommand):
-	
+
 	activeEffector = OpenMaya.MObject()
 	activeHandle = OpenMaya.MObject()
-	
+
 	def __init__(self):
 		OpenMayaMPx.MPxCommand.__init__(self)
-		
+
 	def doIt(self,*args):
 	    global ikhandles
 	    ikhandles = []
 
 	    print "Getting IK Handles"
-	   
+
         d = OpenMaya.MItDependencyNodes()
         mFnDependencyNode = OpenMaya.MFnDependencyNode()
         while(not d.isDone()):
@@ -112,27 +111,27 @@ class GetIKHandles(OpenMayaMPx.MPxCommand):
                 ikhandles.append(m.name())
                 print ikhandles
                 print ikhandles[0]
-        
+
             d.next()
-            
+
 #IK-FK Blend
 class CVG(OpenMayaMPx.MPxNode):
 	idCallback = []
 	joint1 = OpenMaya.MObject()
 	joint2 = OpenMaya.MObject()
 	joint3 = OpenMaya.MObject()
-	
+
 	activeEffector = OpenMaya.MObject()
 	activeHandle = OpenMaya.MObject()
 	activePoleVector = OpenMaya.MObject()
 	activePoleVectorControl = OpenMaya.MObject()
-		
+
 	def __init__(self):
 		OpenMayaMPx.MPxNode.__init__(self)
 		# Callbacks
 		self.idCallback.append(OpenMaya.MEventMessage.addEventCallback("SelectionChanged",self.callbackFunc))
 		self.idCallback.append(OpenMaya.MDGMessage.addNodeRemovedCallback(self.remove,"dependNode"))
-		
+
 	def callbackFunc(self,*args):
 	    print "Called"
 	    print "hi"
@@ -141,13 +140,13 @@ class CVG(OpenMayaMPx.MPxNode):
 	    OpenMaya.MGlobal.getActiveSelectionList(mSel)
 	    mItSelectionList = OpenMaya.MItSelectionList(mSel,OpenMaya.MFn.kDagNode)
 	    mode = "fk"
-	    
+
 	    mFnDependencyNode = OpenMaya.MFnDependencyNode()
-	    
-	    # Find IK effector       
+
+	    # Find IK effector
 	    while(not mItSelectionList.isDone()):
 	        mObj = OpenMaya.MObject()
-	        mItSelectionList.getDependNode(mObj)          
+	        mItSelectionList.getDependNode(mObj)
 	        # If effector was selected, make mode ik
 	        if mObj.apiTypeStr() == "kIkEffector":
 	            self.activeEffector = mObj
@@ -157,7 +156,7 @@ class CVG(OpenMayaMPx.MPxNode):
 	        if self.activePoleVectorControl.apiTypeStr() != "kInvalid":
 	            if OpenMaya.MFnDependencyNode(mObj).name() == OpenMaya.MFnDependencyNode(self.activePoleVectorControl).name():
 	                mode = "ik"
-	                break                
+	                break
 	        mFnDependencyNode.setObject(mObj)
 	        mPlugArray_joint = OpenMaya.MPlugArray()
 	        mFnDependencyNode.getConnections(mPlugArray_joint)
@@ -171,10 +170,10 @@ class CVG(OpenMayaMPx.MPxNode):
 	                self.activeEffector = mPlug2.node()
 	                mode = "ik"
 	                break
-	
+
 	            mItSelectionList.next()
-	        
-	        # Find IK Handle           
+
+	        # Find IK Handle
 	        if self.activeEffector.apiTypeStr() == "kIkEffector":
 	            mFnDependencyNode.setObject(self.activeEffector)
 	            mPlugArray_effector = OpenMaya.MPlugArray()
@@ -186,18 +185,18 @@ class CVG(OpenMayaMPx.MPxNode):
 	                mPlug2 = mPlugArray2[0]
 	                if mPlug2.node().apiTypeStr() == "kIkHandle":
 	                    self.activeHandle = mPlug2.node()
-	                    
+
 	                    break
-	                          
+
 	            # If IK handle was found, find ik blend plug to make it unkeyable and hidden
-	            if self.activeHandle.apiTypeStr() == "kIkHandle": 
+	            if self.activeHandle.apiTypeStr() == "kIkHandle":
 	                mFnDependNodeHandle = OpenMaya.MFnDependencyNode(self.activeHandle)
 	                mPlug_blendAttr = mFnDependNodeHandle.findPlug("ikBlend")
-	                mAttr_blendAttr = mPlug_blendAttr.attribute() 
+	                mAttr_blendAttr = mPlug_blendAttr.attribute()
 	                mMFnAttribute = OpenMaya.MFnAttribute(mAttr_blendAttr)
 	                mMFnAttribute.setKeyable(0)
-	                mMFnAttribute.setChannelBox(0)       
-	                
+	                mMFnAttribute.setChannelBox(0)
+
 	                # Find Pole Vector Constraint
 	                mFnDependencyNode.setObject(self.activeHandle)
 	                mPlugArray_handle = OpenMaya.MPlugArray()
@@ -210,13 +209,13 @@ class CVG(OpenMayaMPx.MPxNode):
 	                    if mPlug2.node().apiTypeStr() == "kPoleVectorConstraint":
 	                        self.activePoleVector = mPlug2.node()
 	                        break
-	        
-	                
+
+
 	                ''' If IK-PoleVector is found then :
 	                    - find IK-PoleVector Control Curve
 	                '''
-	                # If IK pole vector found, find the curve                 
-	                if self.activePoleVector.apiTypeStr() == "kPoleVectorConstraint": 
+	                # If IK pole vector found, find the curve
+	                if self.activePoleVector.apiTypeStr() == "kPoleVectorConstraint":
 	                    mFnDependencyNode.setObject(self.activePoleVector)
 	                    mPlugArray_handle = OpenMaya.MPlugArray()
 	                    mFnDependencyNode.getConnections(mPlugArray_handle)
@@ -227,14 +226,14 @@ class CVG(OpenMayaMPx.MPxNode):
 	                        mPlug2 = mPlugArray2[0]
 	                        if mPlug2.node().apiTypeStr() == "kTransform":
 	                            self.activePoleVectorControl = mPlug2.node()
-	                            break   
-	                        
-	                
+	                            break
+
+
 	                    ''' If IK-PoleVector Control Curve is found then :
 	                        - find middle joint of joint change, to which this control should be attached.
-	                    '''        
-	                    # If the control curve is found, find middle joint of the chain   
-	                    if self.activePoleVectorControl.apiTypeStr() == "kTransform":                     
+	                    '''
+	                    # If the control curve is found, find middle joint of the chain
+	                    if self.activePoleVectorControl.apiTypeStr() == "kTransform":
 	                        mFnDependencyNode.setObject(self.activeEffector)
 	                        mPlugArray_effector = OpenMaya.MPlugArray()
 	                        mFnDependencyNode.getConnections(mPlugArray_effector)
@@ -246,7 +245,7 @@ class CVG(OpenMayaMPx.MPxNode):
 	                            if mPlug2.node().apiTypeStr() == "kJoint":
 	                                self.joint3 = mPlug2.node()
 	                                break
-	                        # Finds joint connected to IK Handle                  
+	                        # Finds joint connected to IK Handle
 	                        mFnDependencyNode.setObject(self.activeHandle)
 	                        mPlugArray_handle = OpenMaya.MPlugArray()
 	                        mFnDependencyNode.getConnections(mPlugArray_handle)
@@ -258,44 +257,44 @@ class CVG(OpenMayaMPx.MPxNode):
 	                            if mPlug2.node().apiTypeStr() == "kJoint":
 	                                self.joint1 = mPlug2.node()
 	                                break
-	                         
+
 	                        # Find joint connected to Joint1 and Joint3
 	                        mObj_joint1Connections = OpenMaya.MObjectArray()
 	                        mObj_joint3Connections = OpenMaya.MObjectArray()
-	                        
+
 	                        # Collect child Joints connected to Joint1
 	                        mFnDependencyNode.setObject(self.joint1)
 	                        mPlugArray_joint1 = OpenMaya.MPlugArray()
 	                        mPlug_joint1Scale = mFnDependencyNode.findPlug("scale")
 	                        mPlugArray_joint1 = OpenMaya.MPlugArray()
-	                        mPlug_joint1Scale.connectedTo(mPlugArray_joint1,True,True)                   
+	                        mPlug_joint1Scale.connectedTo(mPlugArray_joint1,True,True)
 	                        for i in xrange(mPlugArray_joint1.length()):
 	                            if mPlugArray_joint1[i].node().apiTypeStr() == "kJoint":
-	                                mObj_joint1Connections.append(mPlugArray_joint1[i].node()) 
-	                                 
+	                                mObj_joint1Connections.append(mPlugArray_joint1[i].node())
+
 	                        # Collect parent Joints connected to Joint3
 	                        mFnDependencyNode.setObject(self.joint3)
 	                        mPlugArray_joint3 = OpenMaya.MPlugArray()
 	                        mPlug_joint3Scale = mFnDependencyNode.findPlug("inverseScale")
 	                        mPlugArray_joint3 = OpenMaya.MPlugArray()
-	                        mPlug_joint3Scale.connectedTo(mPlugArray_joint3,True,True)                      
+	                        mPlug_joint3Scale.connectedTo(mPlugArray_joint3,True,True)
 	                        for i in xrange(mPlugArray_joint3.length()):
 	                            if mPlugArray_joint3[i].node().apiTypeStr() == "kJoint":
-	                                mObj_joint3Connections.append(mPlugArray_joint3[i].node())                                                       
-	
-	          
+	                                mObj_joint3Connections.append(mPlugArray_joint3[i].node())
+
+
 	                        mFnDependencyNode_temp1 = OpenMaya.MFnDependencyNode()
 	                        mFnDependencyNode_temp3 = OpenMaya.MFnDependencyNode()
-	                        
+
 	                        for i in xrange(mObj_joint1Connections.length()):
 	                            for j in xrange(mObj_joint3Connections.length()):
-	                                mFnDependencyNode_temp1.setObject(mObj_joint1Connections[i]) 
+	                                mFnDependencyNode_temp1.setObject(mObj_joint1Connections[i])
 	                                mFnDependencyNode_temp3.setObject(mObj_joint3Connections[j])
 	                                if mFnDependencyNode_temp1.name() ==mFnDependencyNode_temp3.name():
 	                                    self.joint2 = mObj_joint3Connections[j]
 	                                    break
-	
-	        
+
+
 	        if self.activeEffector.apiTypeStr() == "kIkEffector":
 	            # Control curve 'visibility' plug
 	            if self.activePoleVectorControl.apiTypeStr() != "kInvalid":
@@ -335,12 +334,11 @@ class CVG(OpenMayaMPx.MPxNode):
         	                        pass
         	                mPlug_blendAttr.setInt(1)    
 
-		
 	def remove(self,*args):
 		try:
 			OpenMaya.MSelectionList.add(self.thisMObject())
 		except:
-			# Remove callbacks 
+			# Remove callbacks
 			for i in xrange(len(self.idCallback)):
 				try:
 					OpenMaya.MEventMessage.removeCallback(self.idCallback[i])
@@ -355,7 +353,7 @@ class CVG(OpenMayaMPx.MPxNode):
 	def compute(self, plug, dataBlock):
 		pass
 
-#Creates the CVG node		
+#Creates the CVG node
 def nodeCreator():
     nodePtr = OpenMayaMPx.asMPxPtr(CVG())
     return nodePtr
@@ -366,11 +364,11 @@ def cmdCreator():
 
 def nodeInitializer():
 	pass
-    
+
 #Initializes the plugin
 def initializePlugin(mobject):
     mplugin = OpenMayaMPx.MFnPlugin(mobject,"Farley Maya Practicum", "1.0")
-    
+
     # Register GetIKHandles as a command
     try:
         mplugin.registerCommand("GetIKHandles", cmdCreator)
@@ -382,7 +380,7 @@ def initializePlugin(mobject):
     except:
         sys.stderr.write("Failed to register node: %s" % nodeName)
         raise
-        
+
     BasicDialog().show()
 
 #Uninstalls the plugin
