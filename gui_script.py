@@ -33,8 +33,6 @@ class BasicDialog(QtWidgets.QDialog):
         self.show()
 
     def makeUI(self):
-        global ikhandles
-
         layout = QtWidgets.QVBoxLayout()
 
         # add the update ik handles button
@@ -81,7 +79,6 @@ class GetIKHandles(OpenMayaMPx.MPxCommand):
 		OpenMayaMPx.MPxCommand.__init__(self)
 
 	def doIt(self,*args):
-	    global ikhandles
 	    ikhandles = []
 
 	    print "Getting IK Handles"
@@ -95,7 +92,6 @@ class GetIKHandles(OpenMayaMPx.MPxCommand):
                 print m.name()
                 ikhandles.append(m.name())
                 print ikhandles
-                print ikhandles[0]
 
             d.next()
 
@@ -285,7 +281,6 @@ class CVG(OpenMayaMPx.MPxNode):
 
 	            m = OpenMaya.MFnDependencyNode(self.activeHandle)
 	            print m.name()
-	            global selectedIK
 	            for i in range(len(selectedIK)):
 	                if m.name() == selectedIK[i-1]:
 
