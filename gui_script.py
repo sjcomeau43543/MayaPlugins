@@ -57,16 +57,18 @@ class BasicDialog(QtWidgets.QDialog):
         self.makeUI()
         self.show()
 
-    def submitToList(self):
-        print('----------------------------------------------------')
-        print('submit to list')
-
+    def submitToList(self, checked):
         checkbox = self.sender()
-        print(dir(checkbox))
 
-        selectedIK.append(checkbox)
+        print(dir(checkbox))
+        
+        if(checked):
+            selectedIK.append(checkbox.objectName().encode("utf-8"))
+        else:
+            selectedIK.remove(checkbox.objectName().encode("utf-8"))
+            
+            
         print(selectedIK)
-        print('----------------------------------------------------')
 
 
 #Getes all the IK Handles in the scene
